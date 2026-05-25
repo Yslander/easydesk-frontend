@@ -246,6 +246,7 @@
             formChamado.reset(); // Limpa os campos preenchidos
         }
 
+        
         // READ: Função para carregar os dados na tabela
         async function carregarChamados() {
             try {
@@ -260,6 +261,12 @@
 
                     chamados.forEach(chamado => {
                         const linha = document.createElement('tr');
+                        
+                        // Verifica se o chamado já está concluído para esconder o botão de concluir
+                        const botaoConcluir = chamado.status !== 'Concluído' 
+                            ? `<button onclick="concluirChamado(${chamado.id})" style="background: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; margin-right: 5px;">Concluir</button>` 
+                            : `<span style="color: #28a745; font-weight: bold; margin-right: 10px;">✓ Resolvido</span>`;
+
                         linha.innerHTML = `
                             <td>${chamado.id}</td>
                             <td>${chamado.solicitante}</td>
@@ -271,7 +278,8 @@
                             </td>
                             <td>${chamado.status || 'Pendente'}</td>
                             <td>
-                                <button style="background: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">Editar</button>
+                                ${botaoConcluir}
+                                <button onclick="excluirChamado(${chamado.id})" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">Excluir</button>
                             </td>
                         `;
                         corpoTabela.appendChild(linha);
@@ -282,6 +290,53 @@
             } catch (erro) {
                 console.error("Erro ao conectar com a API:", erro);
                 corpoTabela.innerHTML = `<tr><td colspan="6" style="text-align:center;color:red;">Erro ao conectar no servidor.</td></tr>`;
+            }
+        }
+
+
+        // UPDATE: Função para alterar o status para Concluído
+        async function concluirChamado(id) {
+            // Trava de segurança para evitar cliques acidentais
+            if (!confirm("Deseja realmente marcar este chamado como Concluído?")) return;
+
+            try {
+                const resposta = await fetch(`http://localhost:3000/chamados/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ status: 'Concluído' })
+                });
+
+                if (resposta.ok) {
+                    carregarChamados(); // Atualiza a tela para mostrar a mudança
+                } else {
+                    alert("Erro ao concluir o chamado.");
+                }
+            } catch (erro) {
+                alert("Erro de comunicação com o servidor.");
+            }
+        }
+
+        // DELETE: Função para apagar o chamado do banco de dados
+        async function excluirChamado(id) {
+            // Trava de segurança crítica
+            if (!confirm("Atenção! Esta ação não pode ser desfeita. Deseja excluir este chamado?")) return;
+
+            try {
+                const resposta = await fetch(`http://localhost:3000/chamados/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (resposta.ok) {
+                    carregarChamados(); // Remove a linha da tela imediatamente
+                } else {
+                    alert("Erro ao excluir o chamado.");
+                }
+            } catch (erro) {
+                alert("Erro de comunicação com o servidor.");
             }
         }
 
@@ -315,6 +370,8 @@
                 alert("Erro de comunicação com o servidor.");
             }
         });
+
+        
 
         function fazerLogout() {
             localStorage.removeItem('tokenEasyDesk');
