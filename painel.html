@@ -5,15 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EasyDesk - Painel de Controle</title>
     <style>
-        /* ================= CSS: Estilização do Painel ================= */
+        /* ================= CSS: Estilização Existente ================= */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f7f6; /* Fundo levemente cinza para não cansar a vista */
+            background-color: #f4f7f6;
             margin: 0;
             padding: 0;
         }
-        
-        /* Barra de navegação no topo */
         .navbar {
             background-color: #0056b3;
             color: white;
@@ -40,8 +38,6 @@
         .btn-sair:hover {
             background-color: #c82333;
         }
-
-        /* Container principal centralizado */
         .container {
             max-width: 1100px;
             margin: 40px auto;
@@ -50,8 +46,6 @@
             border-radius: 8px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.05);
         }
-
-        /* Cabeçalho acima da tabela */
         .cabecalho-tabela {
             display: flex;
             justify-content: space-between;
@@ -78,8 +72,6 @@
         .btn-novo-chamado:hover {
             background-color: #218838;
         }
-
-        /* Estilização da Tabela */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -95,7 +87,79 @@
             font-weight: 600;
         }
         tr:hover {
-            background-color: #f1f1f1; /* Efeito visual ao passar o mouse na linha */
+            background-color: #f1f1f1;
+        }
+
+        /* ================= CSS: O Novo Modal (Janela Flutuante) ================= */
+        .modal-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex; /* Invisível por padrão, controlado via JS */
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+        /* Classe que ativa a exibição do modal */
+        .modal-container.ativo {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-conteudo {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+        .modal-conteudo h3 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 15px;
+        }
+        .modal-botoes {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .btn-cancelar {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-salvar {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -109,7 +173,7 @@
     <div class="container">
         <div class="cabecalho-tabela">
             <h2>Chamados Abertos</h2>
-            <button class="btn-novo-chamado">+ Novo Chamado</button>
+            <button class="btn-novo-chamado" onclick="abrirModal()">+ Novo Chamado</button>
         </div>
 
         <table>
@@ -126,77 +190,139 @@
             <tbody id="corpoTabela">
                 <tr>
                     <td colspan="6" style="text-align: center; color: #777;">
-                        Os chamados carregados do banco de dados aparecerão aqui...
+                        Carregando chamados...
                     </td>
                 </tr>
             </tbody>
         </table>
     </div>
 
+    <div class="modal-container" id="modalChamado">
+        <div class="modal-conteudo">
+            <h3>Abrir Novo Chamado</h3>
+            <form id="formNovoChamado">
+                <div class="form-group">
+                    <label for="solicitante">Nome do Solicitante</label>
+                    <input type="text" id="solicitante" required placeholder="Ex: Setor de Produção">
+                </div>
+                <div class="form-group">
+                    <label for="prioridade">Nível de Prioridade</label>
+                    <select id="prioridade">
+                        <option value="Baixa">Baixa</option>
+                        <option value="Média">Média</option>
+                        <option value="Alta">Alta</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="descricao">Descrição do Problema</label>
+                    <textarea id="descricao" rows="4" required placeholder="Detalhe a falha encontrada..."></textarea>
+                </div>
+                <div class="modal-botoes">
+                    <button type="button" class="btn-cancelar" onclick="fecharModal()">Cancelar</button>
+                    <button type="submit" class="btn-salvar">Salvar Chamado</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
-        // 1. O Vigia: Verifica se o crachá existe antes de montar a tela
-const token = localStorage.getItem('tokenEasyDesk');
+        // Verificação de Segurança (Vigia)
+        const token = localStorage.getItem('tokenEasyDesk');
+        if (!token) {
+            alert("Acesso negado! Por favor, faça o login.");
+            window.location.href = 'index.html';
+        }
 
-if (!token) {
-    alert("Acesso negado! Por favor, faça o login.");
-    window.location.href = 'index.html';
-}
+        const corpoTabela = document.getElementById('corpoTabela');
+        const modal = document.getElementById('modalChamado');
+        const formChamado = document.getElementById('formNovoChamado');
 
-// 2. Captura o corpo da tabela onde os dados serão injetados
-const corpoTabela = document.getElementById('corpoTabela');
+        // Funções para Controle Visual do Modal
+        function abrirModal() {
+            modal.classList.add('ativo');
+        }
+        function fecharModal() {
+            modal.classList.remove('ativo');
+            formChamado.reset(); // Limpa os campos preenchidos
+        }
 
-// 3. Função para buscar os dados no Backend (CLP)
-async function carregarChamados() {
-    try {
-        // Envia o GET com o token no cabeçalho (Header)
-        const resposta = await fetch('http://localhost:3000/chamados', {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`
+        // READ: Função para carregar os dados na tabela
+        async function carregarChamados() {
+            try {
+                const resposta = await fetch('http://localhost:3000/chamados', {
+                    method: 'GET',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (resposta.ok) {
+                    const chamados = await resposta.json();
+                    corpoTabela.innerHTML = '';
+
+                    chamados.forEach(chamado => {
+                        const linha = document.createElement('tr');
+                        linha.innerHTML = `
+                            <td>${chamado.id}</td>
+                            <td>${chamado.solicitante}</td>
+                            <td>${chamado.descricao}</td>
+                            <td>
+                                <span style="font-weight: bold; color: ${chamado.prioridade === 'Alta' ? '#dc3545' : (chamado.prioridade === 'Média' ? '#ffc107' : '#28a745')}">
+                                    ${chamado.prioridade}
+                                </span>
+                            </td>
+                            <td>${chamado.status || 'Pendente'}</td>
+                            <td>
+                                <button style="background: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">Editar</button>
+                            </td>
+                        `;
+                        corpoTabela.appendChild(linha);
+                    });
+                } else {
+                    fazerLogout();
+                }
+            } catch (erro) {
+                console.error("Erro ao conectar com a API:", erro);
+                corpoTabela.innerHTML = `<tr><td colspan="6" style="text-align:center;color:red;">Erro ao conectar no servidor.</td></tr>`;
+            }
+        }
+
+        // CREATE: Envio do formulário via POST para a API
+        formChamado.addEventListener('submit', async function(evento) {
+            evento.preventDefault(); // Evita o refresh da página
+
+            const solicitante = document.getElementById('solicitante').value;
+            const prioridade = document.getElementById('prioridade').value;
+            const descricao = document.getElementById('descricao').value;
+
+            try {
+                const resposta = await fetch('http://localhost:3000/chamados', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` // Envia a credencial de segurança
+                    },
+                    body: JSON.stringify({ solicitante, prioridade, descricao })
+                });
+
+                if (resposta.ok) {
+                    alert("Chamado registado com sucesso!");
+                    fecharModal();
+                    carregarChamados(); // Atualiza a tabela imediatamente sem dar F5
+                } else {
+                    alert("Erro ao criar chamado.");
+                }
+            } catch (erro) {
+                console.error("Erro no envio:", erro);
+                alert("Erro de comunicação com o servidor.");
             }
         });
 
-        if (resposta.ok) {
-            const chamados = await resposta.json();
-            corpoTabela.innerHTML = ''; // Limpa a mensagem temporária
-
-            // Cria uma linha <tr> para cada chamado que veio do banco de dados
-            chamados.forEach(chamado => {
-                const linha = document.createElement('tr');
-                linha.innerHTML = `
-                    <td>${chamado.id}</td>
-                    <td>${chamado.solicitante}</td>
-                    <td>${chamado.descricao}</td>
-                    <td>
-                        <span style="font-weight: bold; color: ${chamado.prioridade === 'Alta' ? '#dc3545' : (chamado.prioridade === 'Média' ? '#ffc107' : '#28a745')}">
-                            ${chamado.prioridade}
-                        </span>
-                    </td>
-                    <td>${chamado.status || 'Pendente'}</td>
-                    <td>
-                        <button style="background: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">Editar</button>
-                    </td>
-                `;
-                corpoTabela.appendChild(linha);
-            });
-        } else {
-            // Se o token estiver expirado ou inválido, expulsa o usuário
-            fazerLogout();
+        function fazerLogout() {
+            localStorage.removeItem('tokenEasyDesk');
+            window.location.href = 'index.html';
         }
-    } catch (erro) {
-        console.error("Erro ao conectar com a API:", erro);
-        corpoTabela.innerHTML = `<tr><td colspan="6" style="text-align:center;color:red;">Erro ao conectar no servidor.</td></tr>`;
-    }
-}
 
-// Função do botão Sair
-function fazerLogout() {
-    localStorage.removeItem('tokenEasyDesk');
-    window.location.href = 'index.html';
-}
-
-// 4. Executa a busca no momento que a tela termina de carregar
-carregarChamados();
+        // Inicialização automática ao carregar a página
+        carregarChamados();
     </script>
 </body>
 </html>
