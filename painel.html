@@ -134,13 +134,69 @@
     </div>
 
     <script>
-        // Função inicial para o botão de Sair
-        function fazerLogout() {
-            // Remove o crachá do bolso do navegador
-            localStorage.removeItem('tokenEasyDesk');
-            // Manda o usuário de volta para a tela de login
-            window.location.href = 'index.html';
+        // 1. O Vigia: Verifica se o crachá existe antes de montar a tela
+const token = localStorage.getItem('tokenEasyDesk');
+
+if (!token) {
+    alert("Acesso negado! Por favor, faça o login.");
+    window.location.href = 'index.html';
+}
+
+// 2. Captura o corpo da tabela onde os dados serão injetados
+const corpoTabela = document.getElementById('corpoTabela');
+
+// 3. Função para buscar os dados no Backend (CLP)
+async function carregarChamados() {
+    try {
+        // Envia o GET com o token no cabeçalho (Header)
+        const resposta = await fetch('http://localhost:3000/chamados', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (resposta.ok) {
+            const chamados = await resposta.json();
+            corpoTabela.innerHTML = ''; // Limpa a mensagem temporária
+
+            // Cria uma linha <tr> para cada chamado que veio do banco de dados
+            chamados.forEach(chamado => {
+                const linha = document.createElement('tr');
+                linha.innerHTML = `
+                    <td>${chamado.id}</td>
+                    <td>${chamado.solicitante}</td>
+                    <td>${chamado.descricao}</td>
+                    <td>
+                        <span style="font-weight: bold; color: ${chamado.prioridade === 'Alta' ? '#dc3545' : (chamado.prioridade === 'Média' ? '#ffc107' : '#28a745')}">
+                            ${chamado.prioridade}
+                        </span>
+                    </td>
+                    <td>${chamado.status || 'Pendente'}</td>
+                    <td>
+                        <button style="background: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">Editar</button>
+                    </td>
+                `;
+                corpoTabela.appendChild(linha);
+            });
+        } else {
+            // Se o token estiver expirado ou inválido, expulsa o usuário
+            fazerLogout();
         }
+    } catch (erro) {
+        console.error("Erro ao conectar com a API:", erro);
+        corpoTabela.innerHTML = `<tr><td colspan="6" style="text-align:center;color:red;">Erro ao conectar no servidor.</td></tr>`;
+    }
+}
+
+// Função do botão Sair
+function fazerLogout() {
+    localStorage.removeItem('tokenEasyDesk');
+    window.location.href = 'index.html';
+}
+
+// 4. Executa a busca no momento que a tela termina de carregar
+carregarChamados();
     </script>
 </body>
 </html>
