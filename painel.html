@@ -346,7 +346,7 @@
         // READ: Função para carregar os dados na tabela
         async function carregarChamados() {
             try {
-                const resposta = await fetch('https://easydesk-api.onrender.com/chamados', {
+                const resposta = await fetch('https://easydesk-backend.onrender.com/chamados', {
                     method: 'GET',
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -399,7 +399,7 @@
             if (!confirm("Deseja realmente marcar este chamado como Concluído?")) return;
 
             try {
-                const resposta = await fetch(`https://easydesk-api.onrender.com/chamados/${id}`, {
+                const resposta = await fetch(`https://easydesk-backend.onrender.com/chamados/${id}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -424,7 +424,7 @@
             if (!confirm("Atenção! Esta ação não pode ser desfeita. Deseja excluir este chamado?")) return;
 
             try {
-                const resposta = await fetch(`https://easydesk-api.onrender.com/chamados/${id}`, {
+                const resposta = await fetch(`https://easydesk-backend.onrender.com/chamados/${id}`, {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -451,7 +451,7 @@
             btnSalvar.innerText = "Salvando...";
 
             try {
-                const resposta = await fetch('https://easydesk-api.onrender.com/chamados', {
+                const resposta = await fetch('https://easydesk-backend.onrender.com/chamados', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

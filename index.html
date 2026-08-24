@@ -208,7 +208,7 @@
             const senhaDigitada = document.getElementById('senhaLogin').value;
 
             try {
-                const resposta = await fetch('https://easydesk-api.onrender.com/login', {
+                const resposta = await fetch('https://easydesk-backend.onrender.com/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email: emailDigitado, senha: senhaDigitada })
@@ -247,7 +247,7 @@
             const senhaDigitada = document.getElementById('senhaCadastro').value;
 
             try {
-                const resposta = await fetch('https://easydesk-api.onrender.com/usuarios', {
+                const resposta = await fetch('https://easydesk-backend.onrender.com/usuarios', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ nome: nomeDigitado, email: emailDigitado, senha: senhaDigitada })
