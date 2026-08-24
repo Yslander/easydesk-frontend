@@ -211,7 +211,7 @@
                 const resposta = await fetch('https://easydesk-api.onrender.com/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: emailDigitado, senha: senhaDigiDtada })
+                    body: JSON.stringify({ email: emailDigitado, senha: senhaDigitada })
                 });
 
                 const dados = await resposta.json();
